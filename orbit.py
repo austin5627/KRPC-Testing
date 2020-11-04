@@ -4,8 +4,8 @@ import krpc
 
 
 def jettison_fairings(v):
-    if not len(vessel.parts.fairings) == 0:
-        vessel.parts.fairings[0].jettison()
+    if not len(v.parts.fairings) == 0:
+        v.parts.fairings[0].jettison()
 
 
 print(f'Start')
