@@ -107,7 +107,6 @@ def fine_tune_closest_approach(vessel, target, conn):
         time.sleep(0.1)
         while sensitivities[x][2] < numpy.linalg.norm(target_position()) < last_dist:
             last_dist = numpy.linalg.norm(target_position())
-            print(last_dist)
             time.sleep(0.1)
         match_velocities(vessel, target, conn, x[1])
 
