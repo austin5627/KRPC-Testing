@@ -3,11 +3,6 @@ import time
 import krpc
 
 
-def jettison_fairings(v):
-    if not len(v.parts.fairings) == 0:
-        v.parts.fairings[0].jettison()
-
-
 print(f'Start')
 
 conn = krpc.connect(name='Orbit')
@@ -36,6 +31,7 @@ print('1...')
 time.sleep(1)
 print('Launch!')
 
+# Launch
 vessel.control.activate_next_stage()
 vessel.auto_pilot.engage()
 vessel.auto_pilot.target_pitch_and_heading(90, 90)
@@ -50,29 +46,28 @@ while True:
         frac = ((altitude() - turn_start_altitude) /
                 (turn_end_altitude - turn_start_altitude))
         new_turn_angle = frac * 90
+        # Turn Every Half a Degree
         if abs(new_turn_angle - turn_angle) > .5:
             turn_angle = new_turn_angle
             vessel.auto_pilot.target_pitch_and_heading(90 - turn_angle, 90)
 
-    if stage_2_fuel() < .1:
-        print("Staging")
-        vessel.control.activate_next_stage()
-
     if apoapsis() > target_altitude * .9:
         print("Approaching target apoapsis")
-        jettison_fairings(vessel)
         break
 
+# Fine Burn Until Target Apoapsis Is Reached
 vessel.control.throttle = .25
 while apoapsis() < target_altitude:
     if stage_2_fuel() < .1 and vessel.control.current_stage == 2:
         print("Staging")
         vessel.control.activate_next_stage()
-# TODO:FIX ME spins after staging autopilot problem
-
 
 print('Target apoapsis reached')
 vessel.control.throttle = 0
+
+# Jettison Ascent Stage
+if vessel.control.current_stage == 2:
+    print("Staging")
 
 print('Coasting out of atmosphere')
 while altitude() < 70000:
