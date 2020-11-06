@@ -68,6 +68,7 @@ vessel.control.throttle = 0
 # Jettison Ascent Stage
 if vessel.control.current_stage == 2:
     print("Staging")
+    vessel.control.activate_next_stage()
 
 print('Coasting out of atmosphere')
 while altitude() < 70000:
