@@ -1,7 +1,7 @@
 import math
 import time
 
-import deltaV
+import vessel_utilities
 import krpc
 import numpy
 
@@ -11,7 +11,7 @@ def match_inclination(vessel, target):
     node_ut = vessel.orbit.ut_at_true_anomaly(an_ta)
     node_dv = 2 * vessel.orbit.speed * math.sin(vessel.orbit.relative_inclination(target.orbit) / 2)
     node = vessel.control.add_node(node_ut, 0, -node_dv, 0)
-    deltaV.execute_node(vessel, node, conn)
+    vessel_utilities.execute_node(vessel, node, conn)
 
 
 def get_close_approach(vessel, target):
@@ -52,7 +52,7 @@ def get_close_approach(vessel, target):
     # execute orbit change
     node_ut = conn.space_center.ut + 30
     node = vessel.control.add_node(node_ut, prograde=delta_v)
-    deltaV.execute_node(vessel, node, conn)
+    vessel_utilities.execute_node(vessel, node, conn)
 
 
 def match_velocities(vessel, target, conn, max_throttle=1):
