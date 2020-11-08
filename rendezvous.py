@@ -136,6 +136,6 @@ def angle_between(v1, v2):
     unit_v2 = v2 / numpy.linalg.norm(v2)
 
     dot_product = numpy.dot(unit_v1, unit_v2)
-    determinant = unit_v1[0]*unit_v2[1] - unit_v1[1]*unit_v2[0]
-    angle = numpy.arctan2(determinant, dot_product)
+    determinant1 = numpy.linalg.det((unit_v1, unit_v2))
+    angle = numpy.arctan2(determinant1, dot_product)
     return angle
