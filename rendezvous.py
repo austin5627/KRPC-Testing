@@ -6,7 +6,7 @@ import krpc
 import numpy
 
 
-def match_inclination(vessel, target):
+def match_inclination(vessel, target, conn):
     an_ta = vessel.orbit.true_anomaly_at_an(target.orbit)
     node_ut = vessel.orbit.ut_at_true_anomaly(an_ta)
     node_dv = 2 * vessel.orbit.speed * math.sin(vessel.orbit.relative_inclination(target.orbit) / 2)
@@ -14,20 +14,16 @@ def match_inclination(vessel, target):
     vessel_utilities.execute_node(vessel, node, conn)
 
 
-def get_close_approach(vessel, target):
+def get_close_approach(vessel, target, conn):
     print("Create Close Approach")
 
     # Get Angle Between target and vessel
-    # TODO: Only works if vessel is behind target
+    # TODO: More Testing for vessel in front of target
     v_pos = vessel.position(vessel.orbit.body.non_rotating_reference_frame)
     t_pos = target.position(target.orbit.body.non_rotating_reference_frame)
     v_pos = (v_pos[0], v_pos[2])  # Ignore Altitude
     t_pos = (t_pos[0], t_pos[2])
-    unit_v = v_pos / numpy.linalg.norm(v_pos)  # Convert to unit vectors
-    unit_t = t_pos / numpy.linalg.norm(t_pos)
-
-    dot_product = numpy.dot(unit_v, unit_t)
-    angle = numpy.arccos(numpy.clip(dot_product, -1.0, 1.0))
+    angle = angle_between(v_pos, t_pos)
     print(angle)
 
     orbit = vessel.orbit
@@ -39,7 +35,6 @@ def get_close_approach(vessel, target):
     # Change orbit to be time_from_target longer
     new_period = period + time_from_target
     new_semi_major_axis = math.pow((new_period / math.tau) ** 2 * mu, (1. / 3.))
-    new_apoapsis = new_semi_major_axis * 2 - orbit.periapsis
 
     # delta v required for orbit change
     r = vessel.orbit.periapsis
@@ -108,29 +103,39 @@ def fine_tune_closest_approach(vessel, target, conn):
         while sensitivities[x][2] < numpy.linalg.norm(target_position()) < last_dist:
             last_dist = numpy.linalg.norm(target_position())
             time.sleep(0.1)
-        match_velocities(vessel, target, conn, x[1])
+        match_velocities(vessel, target, conn, sensitivities[x][1])
 
 
-conn = krpc.connect(name='rendezvous')
-vessel = conn.space_center.active_vessel
-target = conn.space_center.target_vessel
+def rendezvous():
+    conn = krpc.connect(name='rendezvous')
+    vessel = conn.space_center.active_vessel
+    target = conn.space_center.target_vessel
 
-if target is None:
-    print("No Target")
-    exit(-2)
+    if target is None:
+        print("No Target")
+        exit(-2)
 
-if vessel.orbit.relative_inclination(target.orbit) > 0.1:
-    match_inclination(vessel, target)
+    if vessel.orbit.relative_inclination(target.orbit) > 0.1:
+        match_inclination(vessel, target, conn)
 
-# Rendezvous
-print("Rendezvous")
+    # Rendezvous
+    print("Rendezvous")
 
-get_close_approach(vessel, target)
+    get_close_approach(vessel, target, conn)
 
-ca_time = vessel.orbit.time_of_closest_approach(target.orbit)
-conn.space_center.warp_to(ca_time - 10)
+    ca_time = vessel.orbit.time_of_closest_approach(target.orbit)
+    conn.space_center.warp_to(ca_time - 10)
 
-match_velocities(vessel, target, conn)
+    match_velocities(vessel, target, conn)
 
-fine_tune_closest_approach(vessel, target, conn)
+    fine_tune_closest_approach(vessel, target, conn)
 
+
+def angle_between(v1, v2):
+    unit_v1 = v1 / numpy.linalg.norm(v1)  # Convert to unit vectors
+    unit_v2 = v2 / numpy.linalg.norm(v2)
+
+    dot_product = numpy.dot(unit_v1, unit_v2)
+    determinant = unit_v1[0]*unit_v2[1] - unit_v1[1]*unit_v2[0]
+    angle = numpy.arctan2(determinant, dot_product)
+    return angle
